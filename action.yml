@@ -1,0 +1,74 @@
+name: primitive.dev - Send Email
+description: >-
+  Send an email from CI via primitive.dev's /v1/send-mail API. Useful for
+  pipeline notifications, release announcements, and alerts. Fails the step if
+  the recipient is rejected.
+author: primitive.dev
+
+branding:
+  icon: mail
+  color: green
+
+inputs:
+  api-key:
+    description: >-
+      Primitive API key. Org-scoped; the `from` address must be on a verified
+      sending domain owned by this key's org. Pass via a GitHub secret reference
+      (see README) — never hard-code. Masked in logs.
+    required: true
+  api-base-url:
+    description: Primitive API base URL. Defaults to production.
+    required: false
+    default: https://api.primitive.dev/v1
+  from:
+    description: >-
+      Sender address. Must be on a verified sending domain owned by the API
+      key's org (e.g. `ci@yourdomain.com`).
+    required: true
+  to:
+    description: Recipient address.
+    required: true
+  subject:
+    description: Email subject.
+    required: true
+  body-text:
+    description: >-
+      Plain-text body. At least one of `body-text` / `body-html` is required.
+    required: false
+  body-html:
+    description: >-
+      HTML body. At least one of `body-text` / `body-html` is required.
+    required: false
+  wait:
+    description: >-
+      When `true`, block until the platform reports a delivery outcome (up to
+      `wait-timeout-ms`) instead of returning as soon as the send is accepted.
+      Default `false`.
+    required: false
+    default: 'false'
+  wait-timeout-ms:
+    description: >-
+      Max milliseconds to wait for delivery when `wait` is true (platform caps
+      at 30000). Ignored when `wait` is false.
+    required: false
+    default: '10000'
+  expected-org-id:
+    description: >-
+      Optional safety guard. When set, the Action calls `/whoami` before sending
+      and aborts if the API key's org differs — prevents a leaked-key cross-org
+      send. Recommended in production workflows.
+    required: false
+
+outputs:
+  email-id:
+    description: UUID of the accepted send.
+  status:
+    description: Platform-reported send status (e.g. `submitted_to_agent`, `delivered`).
+  accepted:
+    description: Comma-separated list of accepted recipients.
+  rejected:
+    description: Comma-separated list of rejected recipients (empty on success — a non-empty value fails the step).
+
+runs:
+  using: node20
+  main: dist/index.js
